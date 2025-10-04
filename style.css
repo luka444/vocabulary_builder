@@ -968,6 +968,54 @@ body {
     backdrop-filter: blur(10px);
 }
 
+/* Full width on desktop, keep container width on mobile */
+@media (min-width: 768px) {
+    .saved-words-section {
+        margin: 0 -20px; /* Negative margin to break out of container */
+        border-radius: 0;
+        padding: 60px 40px;
+    }
+    
+    .saved-words-section .section-header {
+        margin: 0 -40px 40px -40px; /* Extend header to full width */
+        border-radius: 0;
+    }
+    
+    .saved-words-section .search-controls {
+        margin: 0 -40px 30px -40px; /* Extend search controls to full width */
+        padding: 0 40px;
+        background: rgba(255, 255, 255, 0.5);
+        border-radius: 0;
+    }
+    
+    .saved-words-section .words-container {
+        margin: 0 -40px; /* Extend words container to full width */
+        padding: 0 40px;
+    }
+}
+
+/* Enhanced full-width experience on larger screens */
+@media (min-width: 1200px) {
+    .saved-words-section {
+        padding: 80px 60px;
+    }
+    
+    .saved-words-section .section-header {
+        margin: 0 -60px 50px -60px;
+        padding: 40px 60px;
+    }
+    
+    .saved-words-section .search-controls {
+        margin: 0 -60px 40px -60px;
+        padding: 0 60px;
+    }
+    
+    .saved-words-section .words-container {
+        margin: 0 -60px;
+        padding: 0 60px;
+    }
+}
+
 .section-header {
     text-align: center;
     margin-bottom: 40px;
