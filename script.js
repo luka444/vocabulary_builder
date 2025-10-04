@@ -8,6 +8,8 @@ class VocabularyBuilder {
         this.quizCount = this.loadQuizCount();
         this.currentQuizWord = null;
         this.quizActive = false;
+        this.quizMode = 'random'; // 'random' or 'sequential'
+        this.sequentialIndex = 0; // Current position in sequential mode
         this.initializeApp();
     }
 
@@ -60,7 +62,14 @@ class VocabularyBuilder {
         const startQuizBtn = document.getElementById('startQuizBtn');
         if (startQuizBtn) {
             startQuizBtn.addEventListener('click', () => {
-                this.startQuiz();
+                this.startQuiz('random');
+            });
+        }
+
+        const startSequentialQuizBtn = document.getElementById('startSequentialQuizBtn');
+        if (startSequentialQuizBtn) {
+            startSequentialQuizBtn.addEventListener('click', () => {
+                this.startQuiz('sequential');
             });
         }
 
@@ -304,19 +313,32 @@ class VocabularyBuilder {
     }
 
     // Start the quiz
-    startQuiz() {
+    startQuiz(mode = 'random') {
         if (this.words.length === 0) {
             this.showMessage('Please add some words first before starting the quiz!', 'error');
             return;
         }
 
         this.quizActive = true;
+        this.quizMode = mode;
+        this.sequentialIndex = 0; // Reset sequential index
+        
+        // Update button states
         document.getElementById('startQuizBtn').disabled = true;
+        document.getElementById('startSequentialQuizBtn').disabled = true;
         document.getElementById('startQuizBtn').textContent = 'Quiz Active';
         document.getElementById('showAnswerBtn').disabled = false;
         document.getElementById('nextWordBtn').disabled = false;
         
-        this.generateRandomWord();
+        if (mode === 'sequential') {
+            this.generateSequentialWord();
+        } else {
+            this.generateRandomWord();
+        }
+        
+        const modeText = mode === 'sequential' ? 'Sequential' : 'Random';
+        this.updateQuizStats(); // Update stats to show sequential progress
+        this.showMessage(`${modeText} quiz started! Click "Show Information" to reveal the answer.`, 'success');
     }
 
     // Generate a random word for the quiz
@@ -325,6 +347,24 @@ class VocabularyBuilder {
 
         const randomIndex = Math.floor(Math.random() * this.words.length);
         this.currentQuizWord = this.words[randomIndex];
+
+        // Display the word
+        document.getElementById('quizWord').textContent = this.currentQuizWord.word;
+        
+        // Hide the answer
+        document.getElementById('quizAnswer').classList.add('hidden');
+        
+        // Reset button states
+        document.getElementById('showAnswerBtn').textContent = 'Show Information';
+        document.getElementById('nextWordBtn').textContent = 'Next Word';
+    }
+
+    // Generate a sequential word for the quiz
+    generateSequentialWord() {
+        if (this.words.length === 0) return;
+
+        // Use sequential index to get the next word in order
+        this.currentQuizWord = this.words[this.sequentialIndex];
 
         // Display the word
         document.getElementById('quizWord').textContent = this.currentQuizWord.word;
@@ -381,7 +421,20 @@ class VocabularyBuilder {
         this.saveQuizCount();
         this.updateQuizStats();
         
-        this.generateRandomWord();
+        if (this.quizMode === 'sequential') {
+            // Move to next word in sequence
+            this.sequentialIndex++;
+            
+            // Check if we've reached the end
+            if (this.sequentialIndex >= this.words.length) {
+                this.showMessage('You\'ve completed all words! Starting over from the beginning.', 'success');
+                this.sequentialIndex = 0; // Start over
+            }
+            
+            this.generateSequentialWord();
+        } else {
+            this.generateRandomWord();
+        }
     }
 
     // Reset quiz progress
@@ -391,9 +444,12 @@ class VocabularyBuilder {
             this.saveQuizCount();
             this.quizActive = false;
             this.currentQuizWord = null;
+            this.sequentialIndex = 0;
+            this.quizMode = 'random';
             
             document.getElementById('startQuizBtn').disabled = false;
-            document.getElementById('startQuizBtn').textContent = 'Start Quiz';
+            document.getElementById('startSequentialQuizBtn').disabled = false;
+            document.getElementById('startQuizBtn').textContent = 'Start Random Quiz';
             document.getElementById('showAnswerBtn').disabled = true;
             document.getElementById('nextWordBtn').disabled = true;
             document.getElementById('showAnswerBtn').textContent = 'Show Information';
@@ -410,6 +466,15 @@ class VocabularyBuilder {
     updateQuizStats() {
         document.getElementById('totalWords').textContent = this.words.length;
         document.getElementById('quizCount').textContent = this.quizCount;
+        
+        // Show/hide sequential progress based on quiz mode
+        const sequentialProgress = document.getElementById('sequentialProgress');
+        if (this.quizMode === 'sequential' && this.quizActive) {
+            sequentialProgress.style.display = 'block';
+            document.getElementById('currentPosition').textContent = this.sequentialIndex + 1;
+        } else {
+            sequentialProgress.style.display = 'none';
+        }
     }
 
     // Load quiz count from localStorage

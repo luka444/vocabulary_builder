@@ -80,6 +80,10 @@
                             <span class="stat-number" id="quizCount">0</span>
                             <span class="stat-label">Words Reviewed</span>
                         </div>
+                        <div class="stat" id="sequentialProgress" style="display: none;">
+                            <span class="stat-number" id="currentPosition">0</span>
+                            <span class="stat-label">Current Position</span>
+                        </div>
                     </div>
 
                     <div class="quiz-card">
@@ -111,7 +115,8 @@
                     </div>
 
                     <div class="quiz-actions">
-                        <button id="startQuizBtn" class="btn btn-primary">Start Quiz</button>
+                        <button id="startQuizBtn" class="btn btn-primary">Start Random Quiz</button>
+                        <button id="startSequentialQuizBtn" class="btn btn-primary">Start Sequential Quiz</button>
                         <button id="resetQuizBtn" class="btn btn-secondary">Reset Progress</button>
                     </div>
                 </section>
