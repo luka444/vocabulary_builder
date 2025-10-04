@@ -15,7 +15,6 @@
             <nav class="main-nav">
                 <button class="nav-btn" onclick="goToMain()">← Back to Add Words</button>
                 <button class="nav-btn" onclick="goToQuiz()">Practice Quiz</button>
-                <button class="nav-btn" onclick="logout()">🚪 Logout</button>
             </nav>
         </header>
 
@@ -98,30 +97,24 @@
     <script>
         // Navigation functions
         function goToMain() {
-            window.location.href = 'main.html';
+            window.location.href = 'index.html';
         }
 
         function goToQuiz() {
-            window.location.href = 'main.html#quiz';
+            window.location.href = 'index.html#quiz';
         }
 
         // Simple saved words functionality
         class SavedWordsPage {
             constructor() {
+                this.words = this.loadWords();
                 this.currentSort = 'newest';
                 this.currentView = 'grid';
                 this.wordsVisible = false;
-                this.userManager = window.userManager;
                 this.initializePage();
             }
 
             initializePage() {
-                // Check if user is logged in
-                if (!this.userManager || !this.userManager.getCurrentUser()) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
                 this.bindEvents();
                 this.updateWordCount();
                 this.showEmptyState();
@@ -149,18 +142,24 @@
             }
 
             loadWords() {
-                const currentUser = this.userManager.getCurrentUser();
-                return currentUser ? currentUser.words : [];
-            }
-
-            setWords(words) {
-                this.words = words;
-                this.saveWords();
+                try {
+                    const savedWords = localStorage.getItem('vocabularyWords');
+                    const words = savedWords ? JSON.parse(savedWords) : [];
+                    
+                    // Add status to words that don't have it (for backward compatibility)
+                    return words.map(word => {
+                        if (!word.status) {
+                            word.status = 'new'; // Default status for existing words
+                        }
+                        return word;
+                    });
+                } catch (error) {
+                    console.error('Error loading words:', error);
+                    return [];
+                }
             }
 
             filterWords(searchTerm) {
-                const words = this.loadWords();
-                
                 if (!searchTerm.trim()) {
                     // If search is empty, show empty state or toggle based on visibility
                     if (this.wordsVisible) {
@@ -171,7 +170,7 @@
                     return;
                 }
 
-                const filteredWords = words.filter(word => {
+                const filteredWords = this.words.filter(word => {
                     const searchLower = searchTerm.toLowerCase();
                     return (
                         word.word.toLowerCase().includes(searchLower) ||
@@ -210,7 +209,7 @@
                     return;
                 }
 
-                const words = wordsToRender || this.loadWords();
+                const words = wordsToRender || this.words;
                 
                 if (this.currentView === 'grid') {
                     this.renderGridView(words);
@@ -388,9 +387,8 @@
 
             deleteWord(wordId) {
                 if (confirm('Are you sure you want to delete this word?')) {
-                    const words = this.loadWords();
-                    const updatedWords = words.filter(word => word.id !== wordId);
-                    this.setWords(updatedWords);
+                    this.words = this.words.filter(word => word.id !== wordId);
+                    this.saveWords();
                     this.updateWordCount();
                     this.showMessage('Word deleted successfully!', 'success');
                     
@@ -402,12 +400,10 @@
             }
 
             moveWordToStatus(wordId, newStatus) {
-                const words = this.loadWords();
-                const word = words.find(w => w.id === wordId);
+                const word = this.words.find(w => w.id === wordId);
                 if (word) {
                     word.status = newStatus;
-                    this.setWords(words);
-                    this.updateWordCount();
+                    this.saveWords();
                     this.showMessage(`Word moved to ${newStatus}!`, 'success');
                     
                     // Re-render if words are visible
@@ -489,23 +485,22 @@
                     example: word.example || ''
                 });
                 
-                window.location.href = `main.html?${params.toString()}`;
+                window.location.href = `index.html?${params.toString()}`;
             }
 
             saveWords() {
-                if (this.userManager) {
-                    const currentUser = this.userManager.getCurrentUser();
-                    if (currentUser) {
-                        this.userManager.updateUser({ words: this.words });
-                    }
+                try {
+                    localStorage.setItem('vocabularyWords', JSON.stringify(this.words));
+                } catch (error) {
+                    console.error('Error saving words:', error);
+                    this.showMessage('Error saving words!', 'error');
                 }
             }
 
             updateWordCount() {
-                const words = this.loadWords();
                 const countElement = document.getElementById('totalWordsCount');
                 if (countElement) {
-                    countElement.textContent = words.length;
+                    countElement.textContent = this.words.length;
                 }
             }
 
@@ -552,20 +547,7 @@
         }
 
         // Initialize saved words page
-        // Logout function
-        function logout() {
-            if (window.userManager) {
-                window.userManager.logout();
-            }
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize user manager first
-            if (!window.userManager) {
-                window.userManager = new UserManager();
-            }
-            
-            // Then initialize saved words page
             window.savedWordsPage = new SavedWordsPage();
         });
     </script>

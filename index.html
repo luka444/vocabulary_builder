@@ -4,18 +4,177 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vocabulary Builder</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="container">
+        <header class="header">
+            <h1>📚 Vocabulary Builder</h1>
+            <p>Build your vocabulary one word at a time</p>
+            <nav class="main-nav">
+                <button class="nav-btn active" data-page="builder">Add Words</button>
+                <button class="nav-btn" onclick="goToSavedWords()">📖 Saved Words</button>
+                <button class="nav-btn" data-page="quiz">Practice Quiz</button>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <!-- Vocabulary Builder Page -->
+            <div id="builderPage" class="page active">
+                <section class="add-word-section">
+                    <h2>Add New Word</h2>
+                    <p class="section-description">Build your vocabulary by adding new words with their meanings, translations, and examples.</p>
+                    <form id="wordForm" class="word-form">
+                        <div class="form-group">
+                            <label for="word">Word</label>
+                            <input type="text" id="word" name="word" placeholder="Enter a word" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="meaning">Meaning</label>
+                            <textarea id="meaning" name="meaning" placeholder="Enter the meaning" rows="3" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="translation">Translation</label>
+                            <input type="text" id="translation" name="translation" placeholder="Enter translation">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="example">Example Sentence</label>
+                            <textarea id="example" name="example" placeholder="Enter example sentence" rows="2"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Add Word</button>
+                    </form>
+                    
+                    <!-- Backup Controls -->
+                    <div class="backup-controls">
+                        <h3>📁 Backup & Restore</h3>
+                        <p>Export your words as a file or import from backup</p>
+                        <div class="backup-buttons">
+                            <button id="exportWordsBtn" class="btn btn-secondary">📤 Export Words</button>
+                            <input type="file" id="importWordsInput" accept=".json" style="display: none;">
+                            <button id="importWordsBtn" class="btn btn-secondary">📥 Import Words</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+
+            <!-- Quiz Page -->
+            <div id="quizPage" class="page">
+                <section class="quiz-section">
+                    <div class="quiz-header">
+                        <h2>🎯 Practice Quiz</h2>
+                        <p>Test your vocabulary knowledge!</p>
+                    </div>
+                    
+                    <div class="quiz-stats">
+                        <div class="stat">
+                            <span class="stat-number" id="totalWords">0</span>
+                            <span class="stat-label">Total Words</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="quizCount">0</span>
+                            <span class="stat-label">Words Reviewed</span>
+                        </div>
+                    </div>
+
+                    <div class="quiz-card">
+                        <div class="quiz-word-display">
+                            <h3 id="quizWord">Add some words first!</h3>
+                        </div>
+                        
+                        <div class="quiz-controls">
+                            <button id="showAnswerBtn" class="btn btn-secondary" disabled>Show Information</button>
+                            <button id="nextWordBtn" class="btn btn-primary" disabled>Next Word</button>
+                        </div>
+                        
+                        <div id="quizAnswer" class="quiz-answer hidden">
+                            <div class="answer-content">
+                                <div class="answer-item">
+                                    <strong>Meaning:</strong>
+                                    <span id="quizMeaning">-</span>
+                                </div>
+                                <div class="answer-item" id="quizTranslationItem" style="display: none;">
+                                    <strong>Translation:</strong>
+                                    <span id="quizTranslation">-</span>
+                                </div>
+                                <div class="answer-item" id="quizExampleItem" style="display: none;">
+                                    <strong>Example:</strong>
+                                    <span id="quizExample">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="quiz-actions">
+                        <button id="startQuizBtn" class="btn btn-primary">Start Quiz</button>
+                        <button id="resetQuizBtn" class="btn btn-secondary">Reset Progress</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
     <script>
-        // Simple redirect logic to prevent loops
-        document.addEventListener('DOMContentLoaded', () => {
-            const currentUser = localStorage.getItem('currentUser');
-            if (currentUser) {
-                // User is logged in, redirect to main app
-                window.location.href = 'main.html';
-            } else {
-                // User is not logged in, redirect to login
-                window.location.href = 'login.html';
+        // Navigation function
+        function goToSavedWords() {
+            window.location.href = 'saved_words.html';
+        }
+
+        // Backup functionality
+        document.getElementById('exportWordsBtn').addEventListener('click', () => {
+            if (window.vocabularyApp) {
+                window.vocabularyApp.exportWords();
+            }
+        });
+
+        document.getElementById('importWordsBtn').addEventListener('click', () => {
+            document.getElementById('importWordsInput').click();
+        });
+
+        document.getElementById('importWordsInput').addEventListener('change', (e) => {
+            if (e.target.files[0] && window.vocabularyApp) {
+                window.vocabularyApp.importWords(e.target.files[0]);
+            }
+        });
+
+        // Handle quiz page navigation from URL hash and edit parameters
+        window.addEventListener('load', () => {
+            if (window.location.hash === '#quiz') {
+                if (window.vocabularyApp) {
+                    window.vocabularyApp.switchPage('quiz');
+                }
+            }
+            
+            // Handle edit parameters from saved words page
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('edit') === 'true') {
+                const word = urlParams.get('word');
+                const meaning = urlParams.get('meaning');
+                const translation = urlParams.get('translation');
+                const example = urlParams.get('example');
+                
+                if (word && meaning) {
+                    document.getElementById('word').value = word;
+                    document.getElementById('meaning').value = meaning;
+                    document.getElementById('translation').value = translation || '';
+                    document.getElementById('example').value = example || '';
+                    
+                    // Clear URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    // Show message
+                    setTimeout(() => {
+                        if (window.vocabularyApp) {
+                            window.vocabularyApp.showMessage('Word loaded for editing. Make your changes and submit.', 'info');
+                        }
+                    }, 100);
+                }
             }
         });
     </script>

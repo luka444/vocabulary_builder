@@ -1,39 +1,21 @@
 // Vocabulary Builder Application
 class VocabularyBuilder {
     constructor() {
+        this.words = this.loadWords();
         this.currentFilter = 'all';
         this.currentSort = 'newest';
         this.currentPage = 'builder';
+        this.quizCount = this.loadQuizCount();
         this.currentQuizWord = null;
         this.quizActive = false;
-        this.userManager = window.userManager;
         this.initializeApp();
     }
 
     // Initialize the application
     initializeApp() {
-        // Check if user is logged in
-        if (!this.userManager || !this.userManager.getCurrentUser()) {
-            window.location.href = 'login.html';
-            return;
-        }
-        
         this.bindEvents();
         this.updateWordCount();
         this.updateQuizStats();
-    }
-
-    // Get current user's words
-    getWords() {
-        const currentUser = this.userManager.getCurrentUser();
-        return currentUser ? currentUser.words : [];
-    }
-
-    // Set current user's words
-    setWords(words) {
-        if (this.userManager) {
-            this.userManager.updateUser({ words: words });
-        }
     }
 
     // Bind event listeners
@@ -131,20 +113,17 @@ class VocabularyBuilder {
             return;
         }
 
-        // Get current words
-        const words = this.getWords();
-
         // Check for duplicates
-        if (words.some(w => w.word.toLowerCase() === wordData.word.toLowerCase())) {
+        if (this.words.some(w => w.word.toLowerCase() === wordData.word.toLowerCase())) {
             this.showMessage('This word already exists in your vocabulary!', 'error');
             return;
         }
 
         // Add word to array
-        words.unshift(wordData); // Add to beginning for newest first
+        this.words.unshift(wordData); // Add to beginning for newest first
         
-        // Save to user data
-        this.setWords(words);
+        // Save to localStorage
+        this.saveWords();
         
         // Clear form
         form.reset();
@@ -164,14 +143,13 @@ class VocabularyBuilder {
 
     // Filter saved words based on search term
     filterSavedWords(searchTerm) {
-        const words = this.getWords();
-        const filteredWords = words.filter(word => {
+        const filteredWords = this.words.filter(word => {
             const searchLower = searchTerm.toLowerCase();
             return (
                 word.word.toLowerCase().includes(searchLower) ||
                 word.meaning.toLowerCase().includes(searchLower) ||
-                word.translation.toLowerCase().includes(searchLower) ||
-                word.example.toLowerCase().includes(searchLower)
+                (word.translation && word.translation.toLowerCase().includes(searchLower)) ||
+                (word.example && word.example.toLowerCase().includes(searchLower))
             );
         });
         
@@ -454,13 +432,37 @@ class VocabularyBuilder {
         }
     }
 
+    // Load words from localStorage
+    loadWords() {
+        try {
+            const saved = localStorage.getItem('vocabularyWords');
+            const words = saved ? JSON.parse(saved) : [];
+            // Add default status to existing words for backward compatibility
+            return words.map(word => ({
+                ...word,
+                status: word.status || 'new'
+            }));
+        } catch (error) {
+            console.error('Error loading words:', error);
+            return [];
+        }
+    }
+
+    // Save words to localStorage
+    saveWords() {
+        try {
+            localStorage.setItem('vocabularyWords', JSON.stringify(this.words));
+        } catch (error) {
+            console.error('Error saving words:', error);
+            this.showMessage('Error saving words!', 'error');
+        }
+    }
+
     // Update word count display
     updateWordCount() {
         const header = document.querySelector('.header p');
-        const words = this.getWords();
-        const count = words.length;
-        const currentUser = this.userManager.getCurrentUser();
-        header.textContent = `Welcome ${currentUser.username}! Build your vocabulary one word at a time (${count} words saved)`;
+        const count = this.words.length;
+        header.textContent = `Build your vocabulary one word at a time (${count} words saved)`;
     }
 
     // Show message to user
@@ -608,12 +610,6 @@ class VocabularyBuilder {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize user manager first
-    if (!window.userManager) {
-        window.userManager = new UserManager();
-    }
-    
-    // Then initialize vocabulary app
     window.vocabularyApp = new VocabularyBuilder();
     
     // Add keyboard shortcuts
