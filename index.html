@@ -16,6 +16,7 @@
                 <button class="nav-btn active" data-page="builder">Add Words</button>
                 <button class="nav-btn" onclick="goToSavedWords()">📖 Saved Words</button>
                 <button class="nav-btn" data-page="quiz">Practice Quiz</button>
+                <button class="nav-btn" onclick="logout()">🚪 Logout</button>
             </nav>
         </header>
 
@@ -177,6 +178,15 @@
                 }
             }
         });
+    </script>
+    <script src="auth.js"></script>
+    <script>
+        // Logout function
+        function logout() {
+            if (window.userManager) {
+                window.userManager.logout();
+            }
+        }
     </script>
 </body>
 </html>
