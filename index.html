@@ -48,6 +48,17 @@
                         
                         <button type="submit" class="btn btn-primary">Add Word</button>
                     </form>
+                    
+                    <!-- Backup Controls -->
+                    <div class="backup-controls">
+                        <h3>📁 Backup & Restore</h3>
+                        <p>Export your words as a file or import from backup</p>
+                        <div class="backup-buttons">
+                            <button id="exportWordsBtn" class="btn btn-secondary">📤 Export Words</button>
+                            <input type="file" id="importWordsInput" accept=".json" style="display: none;">
+                            <button id="importWordsBtn" class="btn btn-secondary">📥 Import Words</button>
+                        </div>
+                    </div>
                 </section>
             </div>
 
@@ -114,6 +125,23 @@
         function goToSavedWords() {
             window.location.href = 'saved_words.html';
         }
+
+        // Backup functionality
+        document.getElementById('exportWordsBtn').addEventListener('click', () => {
+            if (window.vocabularyApp) {
+                window.vocabularyApp.exportWords();
+            }
+        });
+
+        document.getElementById('importWordsBtn').addEventListener('click', () => {
+            document.getElementById('importWordsInput').click();
+        });
+
+        document.getElementById('importWordsInput').addEventListener('change', (e) => {
+            if (e.target.files[0] && window.vocabularyApp) {
+                window.vocabularyApp.importWords(e.target.files[0]);
+            }
+        });
 
         // Handle quiz page navigation from URL hash and edit parameters
         window.addEventListener('load', () => {

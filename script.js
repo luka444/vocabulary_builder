@@ -513,13 +513,20 @@ class VocabularyBuilder {
 
     // Export words as JSON
     exportWords() {
+        if (this.words.length === 0) {
+            this.showMessage('No words to export!', 'error');
+            return;
+        }
+
         const dataStr = JSON.stringify(this.words, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(dataBlob);
-        link.download = `vocabulary-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `vocabulary-backup-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
+        
+        this.showMessage(`Exported ${this.words.length} words successfully!`, 'success');
     }
 
     // Import words from JSON file
@@ -529,14 +536,35 @@ class VocabularyBuilder {
             try {
                 const importedWords = JSON.parse(e.target.result);
                 if (Array.isArray(importedWords)) {
-                    // Add imported words with new IDs to avoid conflicts
-                    importedWords.forEach(word => {
-                        word.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-                        word.dateAdded = new Date().toISOString();
-                        word.timestamp = Date.now();
-                    });
+                    // Check if user wants to replace or merge
+                    const shouldReplace = confirm(
+                        `Import ${importedWords.length} words?\n\n` +
+                        'OK = Replace all current words\n' +
+                        'Cancel = Add to existing words'
+                    );
                     
-                    this.words = [...importedWords, ...this.words];
+                    if (shouldReplace) {
+                        // Replace all words
+                        this.words = importedWords.map(word => ({
+                            ...word,
+                            id: word.id || Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                            dateAdded: word.dateAdded || new Date().toISOString(),
+                            timestamp: word.timestamp || Date.now(),
+                            status: word.status || 'new'
+                        }));
+                    } else {
+                        // Merge with existing words
+                        const newWords = importedWords.map(word => ({
+                            ...word,
+                            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+                            dateAdded: new Date().toISOString(),
+                            timestamp: Date.now(),
+                            status: word.status || 'new'
+                        }));
+                        
+                        this.words = [...newWords, ...this.words];
+                    }
+                    
                     this.saveWords();
                     this.renderSavedWords();
                     this.updateWordCount();

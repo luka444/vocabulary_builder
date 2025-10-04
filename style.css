@@ -436,6 +436,52 @@ body {
     top: 20px;
 }
 
+/* Backup Controls */
+.backup-controls {
+    margin-top: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.backup-controls h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #4a5568;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.backup-controls p {
+    font-size: 0.9rem;
+    color: #718096;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.backup-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.backup-buttons .btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.backup-buttons .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
 .add-word-section h2 {
     font-size: 1.8rem;
     font-weight: 600;
