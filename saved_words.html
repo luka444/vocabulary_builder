@@ -31,62 +31,15 @@
                     </div>
                 </div>
                 
-                <div class="search-controls">
-                    <input type="text" id="savedSearchInput" placeholder="Search words..." class="search-input">
-                    <div class="view-toggle">
-                        <button id="gridViewBtn" class="view-btn active">Grid View</button>
-                        <button id="kanbanViewBtn" class="view-btn">Kanban View</button>
-                    </div>
-                    <button id="toggleWordsBtn" class="btn btn-primary">Show Words</button>
-                </div>
+        <div class="search-controls">
+            <input type="text" id="savedSearchInput" placeholder="Search words..." class="search-input">
+            <button id="toggleWordsBtn" class="btn btn-primary">Show Words</button>
+        </div>
 
                 <!-- Grid View -->
                 <div id="gridView" class="words-container hidden">
                     <div class="empty-state">
                         <p>Click "Show Words" to display your vocabulary or search for specific words!</p>
-                    </div>
-                </div>
-
-                <!-- Kanban View -->
-                <div id="kanbanView" class="kanban-board hidden">
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <h3>New Words</h3>
-                            <span class="word-count" id="newCount">0</span>
-                        </div>
-                        <div class="kanban-content" data-status="new">
-                            <!-- New words will be added here -->
-                        </div>
-                    </div>
-                    
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <h3>Learning</h3>
-                            <span class="word-count" id="learningCount">0</span>
-                        </div>
-                        <div class="kanban-content" data-status="learning">
-                            <!-- Learning words will be added here -->
-                        </div>
-                    </div>
-                    
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <h3>Practicing</h3>
-                            <span class="word-count" id="practicingCount">0</span>
-                        </div>
-                        <div class="kanban-content" data-status="practicing">
-                            <!-- Practicing words will be added here -->
-                        </div>
-                    </div>
-                    
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <h3>Mastered</h3>
-                            <span class="word-count" id="masteredCount">0</span>
-                        </div>
-                        <div class="kanban-content" data-status="mastered">
-                            <!-- Mastered words will be added here -->
-                        </div>
                     </div>
                 </div>
             </section>
@@ -109,7 +62,6 @@
             constructor() {
                 this.words = this.loadWords();
                 this.currentSort = 'newest';
-                this.currentView = 'grid';
                 this.wordsVisible = false;
                 this.initializePage();
             }
@@ -126,14 +78,6 @@
                     this.filterWords(e.target.value);
                 });
 
-                // View toggle functionality
-                document.getElementById('gridViewBtn').addEventListener('click', () => {
-                    this.switchView('grid');
-                });
-
-                document.getElementById('kanbanViewBtn').addEventListener('click', () => {
-                    this.switchView('kanban');
-                });
 
                 // Toggle words visibility
                 document.getElementById('toggleWordsBtn').addEventListener('click', () => {
@@ -210,12 +154,7 @@
                 }
 
                 const words = wordsToRender || this.words;
-                
-                if (this.currentView === 'grid') {
-                    this.renderGridView(words);
-                } else {
-                    this.renderKanbanView(words);
-                }
+                this.renderGridView(words);
             }
 
             renderGridView(words) {
@@ -442,11 +381,6 @@
             }
 
             showEmptyState() {
-                // Hide both views
-                document.getElementById('gridView').classList.add('hidden');
-                document.getElementById('kanbanView').classList.add('hidden');
-                
-                // Show appropriate empty state
                 const container = document.getElementById('gridView');
                 container.innerHTML = `
                     <div class="empty-state">
