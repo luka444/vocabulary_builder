@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Words - Vocabulary Builder</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📖 Saved Words</h1>
+            <p>Your complete vocabulary collection</p>
+            <nav class="main-nav">
+                <button class="nav-btn" onclick="goToMain()">← Back to Add Words</button>
+                <button class="nav-btn" onclick="goToQuiz()">Practice Quiz</button>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <section class="saved-words-section">
+                <div class="section-header">
+                    <h2>📚 Your Vocabulary Collection</h2>
+                    <p>Manage and review your saved words</p>
+                    <div class="stats-display">
+                        <div class="stat-item">
+                            <span class="stat-number" id="totalWordsCount">0</span>
+                            <span class="stat-label">Total Words</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="search-controls">
+                    <input type="text" id="savedSearchInput" placeholder="Search words..." class="search-input">
+                    <div class="view-toggle">
+                        <button id="gridViewBtn" class="view-btn active">Grid View</button>
+                        <button id="kanbanViewBtn" class="view-btn">Kanban View</button>
+                    </div>
+                    <button id="toggleWordsBtn" class="btn btn-primary">Show Words</button>
+                </div>
+
+                <!-- Grid View -->
+                <div id="gridView" class="words-container hidden">
+                    <div class="empty-state">
+                        <p>Click "Show Words" to display your vocabulary or search for specific words!</p>
+                    </div>
+                </div>
+
+                <!-- Kanban View -->
+                <div id="kanbanView" class="kanban-board hidden">
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <h3>New Words</h3>
+                            <span class="word-count" id="newCount">0</span>
+                        </div>
+                        <div class="kanban-content" data-status="new">
+                            <!-- New words will be added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <h3>Learning</h3>
+                            <span class="word-count" id="learningCount">0</span>
+                        </div>
+                        <div class="kanban-content" data-status="learning">
+                            <!-- Learning words will be added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <h3>Practicing</h3>
+                            <span class="word-count" id="practicingCount">0</span>
+                        </div>
+                        <div class="kanban-content" data-status="practicing">
+                            <!-- Practicing words will be added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="kanban-column">
+                        <div class="kanban-header">
+                            <h3>Mastered</h3>
+                            <span class="word-count" id="masteredCount">0</span>
+                        </div>
+                        <div class="kanban-content" data-status="mastered">
+                            <!-- Mastered words will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Navigation functions
+        function goToMain() {
+            window.location.href = 'index.html';
+        }
+
+        function goToQuiz() {
+            window.location.href = 'index.html#quiz';
+        }
+
+        // Simple saved words functionality
+        class SavedWordsPage {
+            constructor() {
+                this.words = this.loadWords();
+                this.currentSort = 'newest';
+                this.currentView = 'grid';
+                this.wordsVisible = false;
+                this.initializePage();
+            }
+
+            initializePage() {
+                this.bindEvents();
+                this.updateWordCount();
+                this.showEmptyState();
+            }
+
+            bindEvents() {
+                // Search functionality
+                document.getElementById('savedSearchInput').addEventListener('input', (e) => {
+                    this.filterWords(e.target.value);
+                });
+
+                // View toggle functionality
+                document.getElementById('gridViewBtn').addEventListener('click', () => {
+                    this.switchView('grid');
+                });
+
+                document.getElementById('kanbanViewBtn').addEventListener('click', () => {
+                    this.switchView('kanban');
+                });
+
+                // Toggle words visibility
+                document.getElementById('toggleWordsBtn').addEventListener('click', () => {
+                    this.toggleWordsVisibility();
+                });
+            }
+
+            loadWords() {
+                try {
+                    const savedWords = localStorage.getItem('vocabularyWords');
+                    const words = savedWords ? JSON.parse(savedWords) : [];
+                    
+                    // Add status to words that don't have it (for backward compatibility)
+                    return words.map(word => {
+                        if (!word.status) {
+                            word.status = 'new'; // Default status for existing words
+                        }
+                        return word;
+                    });
+                } catch (error) {
+                    console.error('Error loading words:', error);
+                    return [];
+                }
+            }
+
+            filterWords(searchTerm) {
+                if (!searchTerm.trim()) {
+                    // If search is empty, show empty state or toggle based on visibility
+                    if (this.wordsVisible) {
+                        this.renderWords();
+                    } else {
+                        this.showEmptyState();
+                    }
+                    return;
+                }
+
+                const filteredWords = this.words.filter(word => {
+                    const searchLower = searchTerm.toLowerCase();
+                    return (
+                        word.word.toLowerCase().includes(searchLower) ||
+                        word.meaning.toLowerCase().includes(searchLower) ||
+                        (word.translation && word.translation.toLowerCase().includes(searchLower)) ||
+                        (word.example && word.example.toLowerCase().includes(searchLower))
+                    );
+                });
+                
+                // Always show results when searching, regardless of visibility state
+                this.wordsVisible = true;
+                this.renderWords(filteredWords);
+                this.updateToggleButton();
+            }
+
+            sortWords(words) {
+                const wordsToSort = [...words];
+                
+                switch (this.currentSort) {
+                    case 'newest':
+                        return wordsToSort.sort((a, b) => b.timestamp - a.timestamp);
+                    case 'oldest':
+                        return wordsToSort.sort((a, b) => a.timestamp - b.timestamp);
+                    case 'alphabetical':
+                        return wordsToSort.sort((a, b) => a.word.localeCompare(b.word));
+                    case 'reverse':
+                        return wordsToSort.sort((a, b) => b.word.localeCompare(a.word));
+                    default:
+                        return wordsToSort;
+                }
+            }
+
+            renderWords(wordsToRender = null) {
+                if (!this.wordsVisible) {
+                    this.showEmptyState();
+                    return;
+                }
+
+                const words = wordsToRender || this.words;
+                
+                if (this.currentView === 'grid') {
+                    this.renderGridView(words);
+                } else {
+                    this.renderKanbanView(words);
+                }
+            }
+
+            renderGridView(words) {
+                const container = document.getElementById('gridView');
+                const sortedWords = this.sortWords(words);
+
+                if (sortedWords.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p>No words found. Try adjusting your search or add some words to get started!</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = sortedWords.map(word => this.createWordCard(word)).join('');
+                    this.bindDeleteEvents();
+                }
+                
+                container.classList.remove('hidden');
+            }
+
+            renderKanbanView(words) {
+                const container = document.getElementById('kanbanView');
+                
+                // Clear all columns
+                document.querySelectorAll('.kanban-content').forEach(column => {
+                    column.innerHTML = '';
+                });
+
+                // Group words by status
+                const wordsByStatus = {
+                    new: words.filter(word => word.status === 'new'),
+                    learning: words.filter(word => word.status === 'learning'),
+                    practicing: words.filter(word => word.status === 'practicing'),
+                    mastered: words.filter(word => word.status === 'mastered')
+                };
+
+                // Render words in each column
+                Object.keys(wordsByStatus).forEach(status => {
+                    const column = document.querySelector(`[data-status="${status}"]`);
+                    const statusWords = wordsByStatus[status];
+                    
+                    if (statusWords.length === 0) {
+                        column.innerHTML = '<div class="empty-column">No words yet</div>';
+                    } else {
+                        column.innerHTML = statusWords.map(word => this.createKanbanCard(word)).join('');
+                    }
+                });
+
+                // Update column counts
+                this.updateKanbanCounts(wordsByStatus);
+                this.bindKanbanEvents();
+                
+                container.classList.remove('hidden');
+            }
+
+            createWordCard(word) {
+                const date = new Date(word.dateAdded).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+
+                return `
+                    <div class="word-card" data-id="${word.id}">
+                        <div class="word-header">
+                            <div>
+                                <div class="word-title">${this.escapeHtml(word.word)}</div>
+                                ${word.translation ? `<div class="word-translation">${this.escapeHtml(word.translation)}</div>` : ''}
+                                <div class="word-date">Added on ${date}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="word-meaning">${this.escapeHtml(word.meaning)}</div>
+                        
+                        ${word.example ? `<div class="word-example">${this.escapeHtml(word.example)}</div>` : ''}
+                        
+                        <div class="word-actions">
+                            <button class="btn btn-secondary edit-btn" data-id="${word.id}">Edit</button>
+                            <button class="btn btn-danger delete-btn" data-id="${word.id}">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            createKanbanCard(word) {
+                const date = new Date(word.dateAdded).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+
+                return `
+                    <div class="kanban-card" data-id="${word.id}" data-status="${word.status}">
+                        <div class="kanban-card-header">
+                            <div class="word-title">${this.escapeHtml(word.word)}</div>
+                            <div class="status-indicator status-${word.status}"></div>
+                        </div>
+                        
+                        <div class="kanban-card-content">
+                            <div class="word-meaning">${this.escapeHtml(word.meaning)}</div>
+                            ${word.translation ? `<div class="word-translation">${this.escapeHtml(word.translation)}</div>` : ''}
+                        </div>
+                        
+                        <div class="kanban-card-footer">
+                            <div class="word-date">${date}</div>
+                            <div class="kanban-actions">
+                                <button class="btn btn-sm btn-secondary edit-btn" data-id="${word.id}">Edit</button>
+                                <button class="btn btn-sm btn-danger delete-btn" data-id="${word.id}">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            bindDeleteEvents() {
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const wordId = e.target.dataset.id;
+                        this.deleteWord(wordId);
+                    });
+                });
+
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const wordId = e.target.dataset.id;
+                        this.editWord(wordId);
+                    });
+                });
+            }
+
+            bindKanbanEvents() {
+                this.bindDeleteEvents();
+                
+                // Add drag and drop functionality
+                document.querySelectorAll('.kanban-card').forEach(card => {
+                    card.draggable = true;
+                    
+                    card.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', card.dataset.id);
+                        card.classList.add('dragging');
+                    });
+                    
+                    card.addEventListener('dragend', (e) => {
+                        card.classList.remove('dragging');
+                    });
+                });
+
+                document.querySelectorAll('.kanban-content').forEach(column => {
+                    column.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        column.classList.add('drag-over');
+                    });
+                    
+                    column.addEventListener('dragleave', (e) => {
+                        column.classList.remove('drag-over');
+                    });
+                    
+                    column.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        column.classList.remove('drag-over');
+                        
+                        const wordId = e.dataTransfer.getData('text/plain');
+                        const newStatus = column.dataset.status;
+                        
+                        this.moveWordToStatus(wordId, newStatus);
+                    });
+                });
+            }
+
+            deleteWord(wordId) {
+                if (confirm('Are you sure you want to delete this word?')) {
+                    this.words = this.words.filter(word => word.id !== wordId);
+                    this.saveWords();
+                    this.updateWordCount();
+                    this.showMessage('Word deleted successfully!', 'success');
+                    
+                    // Re-render if words are visible
+                    if (this.wordsVisible) {
+                        this.renderWords();
+                    }
+                }
+            }
+
+            moveWordToStatus(wordId, newStatus) {
+                const word = this.words.find(w => w.id === wordId);
+                if (word) {
+                    word.status = newStatus;
+                    this.saveWords();
+                    this.showMessage(`Word moved to ${newStatus}!`, 'success');
+                    
+                    // Re-render if words are visible
+                    if (this.wordsVisible) {
+                        this.renderWords();
+                    }
+                }
+            }
+
+            switchView(view) {
+                this.currentView = view;
+                
+                // Update button states
+                document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+                document.getElementById('kanbanViewBtn').classList.toggle('active', view === 'kanban');
+                
+                // Hide both views initially
+                document.getElementById('gridView').classList.add('hidden');
+                document.getElementById('kanbanView').classList.add('hidden');
+                
+                // Re-render words if visible
+                if (this.wordsVisible) {
+                    this.renderWords();
+                }
+            }
+
+            toggleWordsVisibility() {
+                this.wordsVisible = !this.wordsVisible;
+                this.updateToggleButton();
+                
+                if (this.wordsVisible) {
+                    this.renderWords();
+                } else {
+                    this.showEmptyState();
+                }
+            }
+
+            showEmptyState() {
+                // Hide both views
+                document.getElementById('gridView').classList.add('hidden');
+                document.getElementById('kanbanView').classList.add('hidden');
+                
+                // Show appropriate empty state
+                const container = document.getElementById('gridView');
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>Click "Show Words" to display your vocabulary or search for specific words!</p>
+                    </div>
+                `;
+                container.classList.remove('hidden');
+            }
+
+            updateToggleButton() {
+                const btn = document.getElementById('toggleWordsBtn');
+                btn.textContent = this.wordsVisible ? 'Hide Words' : 'Show Words';
+            }
+
+            updateKanbanCounts(wordsByStatus) {
+                document.getElementById('newCount').textContent = wordsByStatus.new.length;
+                document.getElementById('learningCount').textContent = wordsByStatus.learning.length;
+                document.getElementById('practicingCount').textContent = wordsByStatus.practicing.length;
+                document.getElementById('masteredCount').textContent = wordsByStatus.mastered.length;
+            }
+
+            editWord(wordId) {
+                const word = this.words.find(w => w.id === wordId);
+                if (!word) return;
+
+                // Remove the word from the list temporarily
+                this.words = this.words.filter(w => w.id !== wordId);
+                this.saveWords();
+
+                // Redirect to main page with word data in URL parameters
+                const params = new URLSearchParams({
+                    edit: 'true',
+                    word: word.word,
+                    meaning: word.meaning,
+                    translation: word.translation || '',
+                    example: word.example || ''
+                });
+                
+                window.location.href = `index.html?${params.toString()}`;
+            }
+
+            saveWords() {
+                try {
+                    localStorage.setItem('vocabularyWords', JSON.stringify(this.words));
+                } catch (error) {
+                    console.error('Error saving words:', error);
+                    this.showMessage('Error saving words!', 'error');
+                }
+            }
+
+            updateWordCount() {
+                const countElement = document.getElementById('totalWordsCount');
+                if (countElement) {
+                    countElement.textContent = this.words.length;
+                }
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            showMessage(message, type = 'success') {
+                // Remove existing message
+                const existingMessage = document.querySelector('.success-message');
+                if (existingMessage) {
+                    existingMessage.remove();
+                }
+
+                // Create new message
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `success-message ${type}`;
+                messageDiv.textContent = message;
+                
+                // Style based on type
+                if (type === 'error') {
+                    messageDiv.style.background = '#fc8181';
+                }
+
+                document.body.appendChild(messageDiv);
+
+                // Show message
+                setTimeout(() => {
+                    messageDiv.classList.add('show');
+                }, 100);
+
+                // Hide message after 3 seconds
+                setTimeout(() => {
+                    messageDiv.classList.remove('show');
+                    setTimeout(() => {
+                        if (messageDiv.parentNode) {
+                            messageDiv.parentNode.removeChild(messageDiv);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+        }
+
+        // Initialize saved words page
+        document.addEventListener('DOMContentLoaded', () => {
+            window.savedWordsPage = new SavedWordsPage();
+        });
+    </script>
+</body>
+</html>
