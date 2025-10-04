@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - Vocabulary Builder</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+        .test-box { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; }
+        .success { color: green; }
+        .error { color: red; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Vocabulary Builder Debug</h1>
+    
+    <div class="test-box">
+        <h2>File Check</h2>
+        <p id="fileStatus">Checking files...</p>
+    </div>
+    
+    <div class="test-box">
+        <h2>JavaScript Test</h2>
+        <button onclick="testJS()">Test JavaScript</button>
+        <p id="jsStatus"></p>
+    </div>
+    
+    <div class="test-box">
+        <h2>Local Storage Test</h2>
+        <button onclick="testStorage()">Test Storage</button>
+        <p id="storageStatus"></p>
+    </div>
+    
+    <div class="test-box">
+        <h2>Quick Actions</h2>
+        <button onclick="goToMain()">Go to Main Site</button>
+        <button onclick="clearStorage()">Clear All Data</button>
+        <button onclick="location.reload()">Reload Page</button>
+    </div>
+
+    <script>
+        // File check
+        document.getElementById('fileStatus').innerHTML = '✅ Debug page loaded successfully';
+
+        // JavaScript test
+        function testJS() {
+            try {
+                const test = { test: true };
+                localStorage.setItem('test', JSON.stringify(test));
+                const retrieved = JSON.parse(localStorage.getItem('test'));
+                document.getElementById('jsStatus').innerHTML = 
+                    retrieved.test ? '<span class="success">✅ JavaScript working</span>' : 
+                    '<span class="error">❌ JavaScript error</span>';
+            } catch (e) {
+                document.getElementById('jsStatus').innerHTML = 
+                    `<span class="error">❌ JavaScript error: ${e.message}</span>`;
+            }
+        }
+
+        // Storage test
+        function testStorage() {
+            try {
+                const testData = { words: [], timestamp: Date.now() };
+                localStorage.setItem('vocabularyWords', JSON.stringify(testData));
+                const retrieved = localStorage.getItem('vocabularyWords');
+                document.getElementById('storageStatus').innerHTML = 
+                    retrieved ? '<span class="success">✅ Storage working</span>' : 
+                    '<span class="error">❌ Storage not working</span>';
+            } catch (e) {
+                document.getElementById('storageStatus').innerHTML = 
+                    `<span class="error">❌ Storage error: ${e.message}</span>`;
+            }
+        }
+
+        // Navigation
+        function goToMain() {
+            window.location.href = 'index.html';
+        }
+
+        function clearStorage() {
+            if (confirm('Clear all vocabulary data?')) {
+                localStorage.clear();
+                alert('Data cleared!');
+            }
+        }
+
+        // Auto-run tests
+        setTimeout(() => {
+            testJS();
+            testStorage();
+        }, 500);
+    </script>
+</body>
+</html>
+

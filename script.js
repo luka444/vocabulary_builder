@@ -67,7 +67,12 @@ class VocabularyBuilder {
         const showAnswerBtn = document.getElementById('showAnswerBtn');
         if (showAnswerBtn) {
             showAnswerBtn.addEventListener('click', () => {
-                this.showAnswer();
+                const answerDiv = document.getElementById('quizAnswer');
+                if (answerDiv.classList.contains('hidden')) {
+                    this.showAnswer();
+                } else {
+                    this.hideAnswer();
+                }
             });
         }
 
@@ -360,14 +365,12 @@ class VocabularyBuilder {
         
         // Update button
         document.getElementById('showAnswerBtn').textContent = 'Hide Information';
-        document.getElementById('showAnswerBtn').onclick = () => this.hideAnswer();
     }
 
     // Hide the answer
     hideAnswer() {
         document.getElementById('quizAnswer').classList.add('hidden');
         document.getElementById('showAnswerBtn').textContent = 'Show Information';
-        document.getElementById('showAnswerBtn').onclick = () => this.showAnswer();
     }
 
     // Move to the next word
@@ -394,7 +397,6 @@ class VocabularyBuilder {
             document.getElementById('showAnswerBtn').disabled = true;
             document.getElementById('nextWordBtn').disabled = true;
             document.getElementById('showAnswerBtn').textContent = 'Show Information';
-            document.getElementById('showAnswerBtn').onclick = () => this.showAnswer();
             
             document.getElementById('quizWord').textContent = 'Add some words first!';
             document.getElementById('quizAnswer').classList.add('hidden');
