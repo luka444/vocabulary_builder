@@ -43,7 +43,10 @@ class UserManager {
         const currentUser = localStorage.getItem('currentUser');
         if (currentUser) {
             this.currentUser = JSON.parse(currentUser);
-            this.redirectToApp();
+            // Only redirect if we're on the login page
+            if (window.location.pathname.includes('login.html')) {
+                this.redirectToApp();
+            }
         }
     }
 
@@ -158,7 +161,7 @@ class UserManager {
 
     // Redirect to main application
     redirectToApp() {
-        window.location.href = 'index.html';
+        window.location.href = 'main.html';
     }
 
     // Save users to localStorage

@@ -98,11 +98,11 @@
     <script>
         // Navigation functions
         function goToMain() {
-            window.location.href = 'index.html';
+            window.location.href = 'main.html';
         }
 
         function goToQuiz() {
-            window.location.href = 'index.html#quiz';
+            window.location.href = 'main.html#quiz';
         }
 
         // Simple saved words functionality
@@ -489,7 +489,7 @@
                     example: word.example || ''
                 });
                 
-                window.location.href = `index.html?${params.toString()}`;
+                window.location.href = `main.html?${params.toString()}`;
             }
 
             saveWords() {
@@ -560,6 +560,12 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize user manager first
+            if (!window.userManager) {
+                window.userManager = new UserManager();
+            }
+            
+            // Then initialize saved words page
             window.savedWordsPage = new SavedWordsPage();
         });
     </script>

@@ -608,6 +608,12 @@ class VocabularyBuilder {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize user manager first
+    if (!window.userManager) {
+        window.userManager = new UserManager();
+    }
+    
+    // Then initialize vocabulary app
     window.vocabularyApp = new VocabularyBuilder();
     
     // Add keyboard shortcuts
