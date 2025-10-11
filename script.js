@@ -1,6 +1,17 @@
 // Vocabulary Builder Application
 class VocabularyBuilder {
     constructor() {
+        this.auth = new AuthSystem();
+        
+        // Check if user is logged in
+        if (!this.auth.isLoggedIn()) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // Migrate old words if this is first time login
+        this.auth.migrateOldWords();
+
         this.words = this.loadWords();
         this.currentFilter = 'all';
         this.currentSort = 'newest';
@@ -497,11 +508,10 @@ class VocabularyBuilder {
         }
     }
 
-    // Load words from localStorage
+    // Load words from user's account
     loadWords() {
         try {
-            const saved = localStorage.getItem('vocabularyWords');
-            const words = saved ? JSON.parse(saved) : [];
+            const words = this.auth.getUserWords();
             // Add default status to existing words for backward compatibility
             return words.map(word => ({
                 ...word,
@@ -513,10 +523,10 @@ class VocabularyBuilder {
         }
     }
 
-    // Save words to localStorage
+    // Save words to user's account
     saveWords() {
         try {
-            localStorage.setItem('vocabularyWords', JSON.stringify(this.words));
+            this.auth.saveUserWords(this.words);
         } catch (error) {
             console.error('Error saving words:', error);
             this.showMessage('Error saving words!', 'error');
@@ -573,28 +583,6 @@ class VocabularyBuilder {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    // Save words to localStorage
-    saveWords() {
-        try {
-            localStorage.setItem('vocabularyWords', JSON.stringify(this.words));
-        } catch (error) {
-            console.error('Error saving words:', error);
-            this.showMessage('Error saving words to storage!', 'error');
-        }
-    }
-
-    // Load words from localStorage
-    loadWords() {
-        try {
-            const savedWords = localStorage.getItem('vocabularyWords');
-            return savedWords ? JSON.parse(savedWords) : [];
-        } catch (error) {
-            console.error('Error loading words:', error);
-            this.showMessage('Error loading words from storage!', 'error');
-            return [];
-        }
     }
 
     // Initialize saved words page

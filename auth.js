@@ -1,223 +1,176 @@
-// User Authentication System
-class UserManager {
+// Authentication System
+class AuthSystem {
     constructor() {
-        this.currentUser = null;
-        this.users = this.loadUsers();
-        this.initializeAuth();
+        this.USERS_KEY = 'vocab_users';
+        this.CURRENT_USER_KEY = 'vocab_current_user';
+        this.initializeStorage();
     }
 
-    // Initialize authentication system
-    initializeAuth() {
-        this.bindAuthEvents();
-        this.checkExistingSession();
-    }
-
-    // Bind authentication event listeners
-    bindAuthEvents() {
-        // Login form
-        document.getElementById('loginFormElement').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleLogin();
-        });
-
-        // Register form
-        document.getElementById('registerFormElement').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleRegister();
-        });
-
-        // Form switching
-        document.getElementById('showRegister').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showRegisterForm();
-        });
-
-        document.getElementById('showLogin').addEventListener('click', (e) => {
-            e.preventDefault();
-            this.showLoginForm();
-        });
-    }
-
-    // Check if user is already logged in
-    checkExistingSession() {
-        const currentUser = localStorage.getItem('currentUser');
-        if (currentUser) {
-            this.currentUser = JSON.parse(currentUser);
-            // Only redirect if we're on the login page
-            if (window.location.pathname.includes('login.html')) {
-                this.redirectToApp();
-            }
+    // Initialize storage with default structure if needed
+    initializeStorage() {
+        const users = localStorage.getItem(this.USERS_KEY);
+        if (!users) {
+            // Initialize with empty users object
+            localStorage.setItem(this.USERS_KEY, JSON.stringify({}));
         }
     }
 
-    // Handle user login
-    handleLogin() {
-        const username = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value;
-
-        if (!username || !password) {
-            this.showMessage('Please fill in all fields', 'error');
-            return;
+    // Get all users from localStorage
+    getUsers() {
+        try {
+            const users = localStorage.getItem(this.USERS_KEY);
+            return users ? JSON.parse(users) : {};
+        } catch (error) {
+            console.error('Error loading users:', error);
+            return {};
         }
-
-        const user = this.users.find(u => u.username === username);
-        if (!user) {
-            this.showMessage('User not found', 'error');
-            return;
-        }
-
-        if (user.password !== password) {
-            this.showMessage('Incorrect password', 'error');
-            return;
-        }
-
-        // Login successful
-        this.currentUser = user;
-        this.saveCurrentUser();
-        this.showMessage('Login successful!', 'success');
-        
-        setTimeout(() => {
-            this.redirectToApp();
-        }, 1000);
-    }
-
-    // Handle user registration
-    handleRegister() {
-        const username = document.getElementById('registerUsername').value.trim();
-        const password = document.getElementById('registerPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-
-        if (!username || !password || !confirmPassword) {
-            this.showMessage('Please fill in all fields', 'error');
-            return;
-        }
-
-        if (username.length < 3) {
-            this.showMessage('Username must be at least 3 characters', 'error');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showMessage('Password must be at least 6 characters', 'error');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            this.showMessage('Passwords do not match', 'error');
-            return;
-        }
-
-        // Check if username already exists
-        if (this.users.find(u => u.username === username)) {
-            this.showMessage('Username already exists', 'error');
-            return;
-        }
-
-        // Create new user
-        const newUser = {
-            id: Date.now().toString(),
-            username: username,
-            password: password,
-            words: [],
-            quizCount: 0,
-            dateCreated: new Date().toISOString()
-        };
-
-        this.users.push(newUser);
-        this.saveUsers();
-        
-        this.currentUser = newUser;
-        this.saveCurrentUser();
-        
-        this.showMessage('Account created successfully!', 'success');
-        
-        setTimeout(() => {
-            this.redirectToApp();
-        }, 1000);
-    }
-
-    // Show register form
-    showRegisterForm() {
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('registerForm').classList.remove('hidden');
-        this.clearForms();
-    }
-
-    // Show login form
-    showLoginForm() {
-        document.getElementById('registerForm').classList.add('hidden');
-        document.getElementById('loginForm').classList.remove('hidden');
-        this.clearForms();
-    }
-
-    // Clear all form inputs
-    clearForms() {
-        document.getElementById('loginUsername').value = '';
-        document.getElementById('loginPassword').value = '';
-        document.getElementById('registerUsername').value = '';
-        document.getElementById('registerPassword').value = '';
-        document.getElementById('confirmPassword').value = '';
-    }
-
-    // Redirect to main application
-    redirectToApp() {
-        window.location.href = 'main.html';
     }
 
     // Save users to localStorage
-    saveUsers() {
+    saveUsers(users) {
         try {
-            localStorage.setItem('vocabularyUsers', JSON.stringify(this.users));
+            localStorage.setItem(this.USERS_KEY, JSON.stringify(users));
+            return true;
         } catch (error) {
             console.error('Error saving users:', error);
-            this.showMessage('Error saving user data!', 'error');
+            return false;
         }
     }
 
-    // Load users from localStorage
-    loadUsers() {
-        try {
-            const savedUsers = localStorage.getItem('vocabularyUsers');
-            return savedUsers ? JSON.parse(savedUsers) : [];
-        } catch (error) {
-            console.error('Error loading users:', error);
-            this.showMessage('Error loading user data!', 'error');
-            return [];
+    // Register a new user
+    register(username, password) {
+        // Validate inputs
+        if (!username || username.length < 3) {
+            return {
+                success: false,
+                message: 'Username must be at least 3 characters long!'
+            };
+        }
+
+        if (!password || password.length < 4) {
+            return {
+                success: false,
+                message: 'Password must be at least 4 characters long!'
+            };
+        }
+
+        const users = this.getUsers();
+
+        // Check if username already exists
+        if (users[username]) {
+            return {
+                success: false,
+                message: 'Username already exists! Please choose a different username.'
+            };
+        }
+
+        // Create new user
+        users[username] = {
+            username: username,
+            password: password, // In a real app, this should be hashed!
+            createdAt: new Date().toISOString(),
+            words: [] // Each user has their own words array
+        };
+
+        // Save users
+        if (this.saveUsers(users)) {
+            return {
+                success: true,
+                message: 'Registration successful!'
+            };
+        } else {
+            return {
+                success: false,
+                message: 'Error saving user data. Please try again.'
+            };
         }
     }
 
-    // Save current user session
-    saveCurrentUser() {
-        try {
-            localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-        } catch (error) {
-            console.error('Error saving current user:', error);
+    // Login user
+    login(username, password) {
+        const users = this.getUsers();
+        const user = users[username];
+
+        // Check if user exists and password matches
+        if (user && user.password === password) {
+            // Set current user
+            localStorage.setItem(this.CURRENT_USER_KEY, username);
+            return true;
         }
-    }
 
-    // Get current user
-    getCurrentUser() {
-        return this.currentUser;
-    }
-
-    // Update user data
-    updateUser(userData) {
-        if (!this.currentUser) return;
-
-        const userIndex = this.users.findIndex(u => u.id === this.currentUser.id);
-        if (userIndex !== -1) {
-            this.users[userIndex] = { ...this.users[userIndex], ...userData };
-            this.currentUser = this.users[userIndex];
-            this.saveUsers();
-            this.saveCurrentUser();
-        }
+        return false;
     }
 
     // Logout user
     logout() {
-        this.currentUser = null;
-        localStorage.removeItem('currentUser');
+        localStorage.removeItem(this.CURRENT_USER_KEY);
         window.location.href = 'login.html';
+    }
+
+    // Check if user is logged in
+    isLoggedIn() {
+        const currentUser = localStorage.getItem(this.CURRENT_USER_KEY);
+        return currentUser !== null && currentUser !== '';
+    }
+
+    // Get current logged-in user
+    getCurrentUser() {
+        const username = localStorage.getItem(this.CURRENT_USER_KEY);
+        if (!username) return null;
+
+        const users = this.getUsers();
+        return users[username] || null;
+    }
+
+    // Get current username
+    getCurrentUsername() {
+        return localStorage.getItem(this.CURRENT_USER_KEY);
+    }
+
+    // Get user's words
+    getUserWords(username = null) {
+        const user = username ? this.getUsers()[username] : this.getCurrentUser();
+        return user ? user.words : [];
+    }
+
+    // Save user's words
+    saveUserWords(words, username = null) {
+        const targetUsername = username || this.getCurrentUsername();
+        if (!targetUsername) return false;
+
+        const users = this.getUsers();
+        if (!users[targetUsername]) return false;
+
+        users[targetUsername].words = words;
+        return this.saveUsers(users);
+    }
+
+    // Migrate old localStorage words to current user (for backward compatibility)
+    migrateOldWords() {
+        const currentUser = this.getCurrentUser();
+        if (!currentUser) return;
+
+        // Check if user already has words
+        if (currentUser.words && currentUser.words.length > 0) {
+            return; // User already has words, don't migrate
+        }
+
+        // Get old words from localStorage
+        const oldWords = localStorage.getItem('vocabularyWords');
+        if (oldWords) {
+            try {
+                const words = JSON.parse(oldWords);
+                if (words && words.length > 0) {
+                    // Save to current user
+                    this.saveUserWords(words);
+                    // Remove old words
+                    localStorage.removeItem('vocabularyWords');
+                    console.log('Migrated old words to user account');
+                }
+            } catch (error) {
+                console.error('Error migrating old words:', error);
+            }
+        }
     }
 
     // Show message to user
@@ -232,15 +185,8 @@ class UserManager {
         const messageDiv = document.createElement('div');
         messageDiv.className = `auth-message ${type}`;
         messageDiv.textContent = message;
-        
-        // Style based on type
-        if (type === 'error') {
-            messageDiv.style.background = '#fc8181';
-        } else {
-            messageDiv.style.background = '#48bb78';
-        }
 
-        document.querySelector('.auth-container').appendChild(messageDiv);
+        document.body.appendChild(messageDiv);
 
         // Show message
         setTimeout(() => {
@@ -257,9 +203,41 @@ class UserManager {
             }, 300);
         }, 3000);
     }
+
+    // Export user data as JSON file
+    exportUserData() {
+        const user = this.getCurrentUser();
+        if (!user) return;
+
+        const userData = {
+            username: user.username,
+            createdAt: user.createdAt,
+            words: user.words,
+            exportedAt: new Date().toISOString()
+        };
+
+        const dataStr = JSON.stringify(userData, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `vocabulary-${user.username}-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+    }
+
+    // Export all users data (admin function)
+    exportAllUsersData() {
+        const users = this.getUsers();
+        const dataStr = JSON.stringify(users, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = `vocabulary-all-users-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+    }
 }
 
-// Initialize user manager when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.userManager = new UserManager();
-});
+// Make AuthSystem available globally
+window.AuthSystem = AuthSystem;
+

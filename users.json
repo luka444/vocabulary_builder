@@ -1,0 +1,40 @@
+{
+  "example_user": {
+    "username": "example_user",
+    "password": "example_password",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "words": [
+      {
+        "id": "1234567890",
+        "word": "Example",
+        "meaning": "A thing characteristic of its kind or illustrating a general rule",
+        "translation": "Örnek",
+        "example": "This is an example sentence.",
+        "dateAdded": "2024-01-01T00:00:00.000Z",
+        "timestamp": 1234567890,
+        "status": "new"
+      }
+    ]
+  },
+  "_readme": {
+    "description": "This file serves as a template for the user data structure stored in localStorage",
+    "note": "In the actual application, user data is stored in browser's localStorage under the key 'vocab_users'",
+    "fields": {
+      "username": "Unique username for the user",
+      "password": "User's password (Note: In production, this should be hashed!)",
+      "createdAt": "ISO timestamp when the user account was created",
+      "words": "Array of vocabulary words belonging to this user"
+    },
+    "word_fields": {
+      "id": "Unique identifier for the word",
+      "word": "The vocabulary word",
+      "meaning": "Definition of the word",
+      "translation": "Translation in another language (optional)",
+      "example": "Example sentence using the word (optional)",
+      "dateAdded": "ISO timestamp when word was added",
+      "timestamp": "Unix timestamp for sorting",
+      "status": "Learning status: 'new', 'learning', 'practicing', or 'mastered'"
+    }
+  }
+}
+
